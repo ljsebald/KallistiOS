@@ -31,7 +31,15 @@ kos_base=$(CURDIR)/../..
 binutils_ver=2.23.2
 gcc_ver=4.7.3
 newlib_ver=2.0.0
+# CA 6.19.16: added gdb_grab since it needs the 'a' prefixed, as per ftp://ftp.gnu.org/gnu/gdb/
+#             We don't change gdb_ver as a whole, but we do change some defines in the build
+#             script, so it creates gdb-6.7.1 and *NOT* gdb-6.7.1a as the directory.
+gdb_grab=6.7.1a
 gdb_ver=6.7.1
+# CA 6.19.16: added insight_grab since it needs the 'a' prefixed, as per ftp://sourceware.org/pub/insight/releases
+#             We don't change insight_ver as a whole, but we do change some defines in the build
+#             script, so it creates insight-6.7.1 and *NOT* insight-6.7.1a as the directory.
+insight_grab=6.7.1a
 insight_ver=6.7.1
 
 # With GCC 4.x versions, the patches provide a kos thread model, so you should
@@ -211,19 +219,21 @@ $(build_gcc_pass2): logdir
 
 
 # GDB building
+# CA 6.19.16: Change first few of these to gdb_grab, so it fetches the correct version in the FTP.
 
-gdb-$(gdb_ver).tar.bz2:
+gdb-$(gdb_grab).tar.bz2:
 	@echo "+++ Downloading GDB..."
-	wget -c ftp://ftp.gnu.org/gnu/gdb/gdb-$(gdb_ver).tar.bz2
+	wget -c ftp://ftp.gnu.org/gnu/gdb/gdb-$(gdb_grab).tar.bz2
 
-unpack_gdb: gdb-$(gdb_ver).tar.bz2 unpack_gdb_stamp
+unpack_gdb: gdb-$(gdb_grab).tar.bz2 unpack_gdb_stamp
 
 unpack_gdb_stamp: 
 	@echo "+++ Unpacking GDB..."
 	rm -f $@
-	rm -rf gdb-$(gdb_ver)
-	tar jxf gdb-$(gdb_ver).tar.bz2
+	rm -rf gdb-$(gdb_grab)
+	tar jxf gdb-$(gdb_grab).tar.bz2
 	touch $@
+# CA 6.19.16: now leave gdb_grab alone and use gdb_ver, and it will build and link correctly.
 
 build_gdb: log = $(logdir)/gdb-$(gdb_ver).log
 build_gdb: logdir
@@ -256,23 +266,26 @@ gdb: install_gdb
 
 
 # INSIGHT building
+# CA 6.19.16: Change first few of these to insight_grab, so it fetches the correct version in the FTP.
 
-insight-$(insight_ver).tar.bz2:
+insight-$(insight_grab).tar.bz2:
 	@echo "+++ Downloading INSIGHT..."
-	wget -c ftp://sourceware.org/pub/insight/releases/insight-$(insight_ver).tar.bz2
+	wget -c ftp://sourceware.org/pub/insight/releases/insight-$(insight_grab).tar.bz2
 
-unpack_insight: insight-$(insight_ver).tar.bz2 unpack_insight_stamp
+unpack_insight: insight-$(insight_grab).tar.bz2 unpack_insight_stamp
 
 unpack_insight_stamp:
 	@echo "+++ Unpacking INSIGHT..."
 	rm -f $@
-	rm -rf insight-$(insight_ver)
-	tar jxf insight-$(insight_ver).tar.bz2
+	rm -rf insight-$(insight_grab)
+	tar jxf insight-$(insight_grab).tar.bz2
 	touch $@
 
-build_insight: log = $(logdir)/insight-$(insight_ver).log
+build_insight: log = $(logdir)/insight-$(insight_grab).log
 build_insight: logdir
 build_insight: unpack_insight build_insight_stamp
+
+# Now build INSIGHT normally, ignoring insight_grab and instead using insight_ver.
 
 build_insight_stamp:
 	@echo "+++ Building INSIGHT..."
