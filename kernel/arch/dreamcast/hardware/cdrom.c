@@ -5,6 +5,7 @@
    Copyright (C) 2000 Dan Potter
    Copyright (C) 2014 Lawrence Sebald
    Copyright (C) 2014 Donald Haase
+   Copyright (C) 2016 Ruslan Rostovtsev
 
  */
 
@@ -443,14 +444,10 @@ int cdrom_spin_down() {
 /* Initialize: assume no threading issues */
 int cdrom_init() {
     uint32 p;
-    volatile uint32 *react = (uint32 *)0xa05f74e4,
-                     *bios = (uint32 *)0xa0000000;
+    volatile uint32 *bios = (uint32 *)0xa0000000;
 
-    /* Reactivate drive: send the BIOS size and then read each
-       word across the bus so the controller can verify it. */
-    *react = 0x1fffff;
-
-    for(p = 0; p < 0x200000 / sizeof(bios[0]); p++) {
+    /* Continue BIOS CRC checking by Holly if the binary startup with Mil-CD way */
+    for(p = 0x1000 / sizeof(bios[0]); p < 0x4300 / sizeof(bios[0]); p++) {
         (void)bios[p];
     }
 
