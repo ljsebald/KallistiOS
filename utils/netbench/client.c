@@ -16,28 +16,33 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#define SERVER "localhost"
-#define PORT "1337"
+#include <kos.h>
+
+#define SERVER "127.0.0.1"
+#define PORT 1337
 #define BLOCKSZ 1024
 
 uint8_t buffer[BLOCKSZ];
 
+KOS_INIT_FLAGS(INIT_DEFAULT | INIT_NET);
+
 int main(int argc, char *argv[]) {
     int s = -1;
-    struct addrinfo hints, *server, *it;
     size_t total = 0;
     ssize_t len;
     struct timeval start, stop;
     uint64_t tt;
     float rate;
     char pfx = ' ';
+    struct sockaddr_in addr;
 
-    memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
+    memset(&addr, 0, sizeof(struct sockaddr_in));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(PORT);
+    addr.sin_addr.s_addr = inet_addr(SERVER);
 
-    if(getaddrinfo(SERVER, PORT, &hints, &server)) {
-        perror("getaddrinfo");
+    if((s = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+        perror("socket");
         exit(EXIT_FAILURE);
     }
 
@@ -46,17 +51,10 @@ int main(int argc, char *argv[]) {
     memset(&stop, 0, sizeof(struct timeval));
     gettimeofday(&start, NULL);
 
-    for(it = server; it && s < 0; it = it->ai_next) {
-        if((s = socket(it->ai_family, it->ai_socktype, it->ai_protocol)) < 0) {
-            perror("socket");
-            continue;
-        }
-
-        if(connect(s, it->ai_addr, it->ai_addrlen) < 0) {
-            perror("connect");
-            close(s);
-            s = -1;
-        }
+    if(connect(s, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
+        perror("connect");
+        close(s);
+        exit(EXIT_FAILURE);
     }
 
     if(s < 0) {
