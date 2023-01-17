@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     int s = -1;
     size_t total = 0;
     ssize_t len;
-    struct timeval start, stop;
+    uint64_t start, stop;
     uint64_t tt;
     float rate;
     char pfx = ' ';
@@ -48,8 +48,8 @@ int main(int argc, char *argv[]) {
 
     /* Start timing. The loop will likely exit on the first pass... */
     printf("Opening connection...\n");
-    memset(&stop, 0, sizeof(struct timeval));
-    gettimeofday(&start, NULL);
+    stop = 0;
+    start = timer_ms_gettime64();
 
     if(connect(s, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
         perror("connect");
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
             break;
         }
         else if(len == 0) {
-            gettimeofday(&stop, NULL);
+            stop = timer_ms_gettime64();
             printf("Connection closed\n");
             break;
         }
@@ -81,10 +81,10 @@ int main(int argc, char *argv[]) {
         total += (size_t)len;
     }
 
-    if(stop.tv_sec != 0 || stop.tv_usec != 0) {
-        tt = (stop.tv_sec - start.tv_sec) * 1000;
-        tt += (stop.tv_usec - start.tv_usec) / 1000;
-        printf("%zu bytes received in %" PRIu64 " milliseconds\n", total, tt);
+    if(stop != 0) {
+        tt = stop - start;
+        printf("%lu bytes received in %" PRIu64 " milliseconds\n",
+               (unsigned long)total, tt);
 
         rate = total / (((float)tt) / 1000);
         if(rate > 1000) {
